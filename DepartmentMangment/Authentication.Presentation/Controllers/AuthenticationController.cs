@@ -2,6 +2,8 @@
 using BusinessLogic.Presentation;
 using DepartManagment.Application.Commands.ConfirmEmail;
 using DepartManagment.Application.Commands.ConfirmResetPasswordToken;
+using DepartManagment.Application.Commands.Employees.DeleteEmployee;
+using DepartManagment.Application.Commands.Employees.UpdateEmployee;
 using DepartManagment.Application.Commands.RegisterUser;
 using DepartManagment.Application.Interfaces;
 using DepartManagment.Application.Models;
@@ -40,6 +42,16 @@ public class DepartManagmentController : BaseController
     [AllowAnonymous]
     public async Task<IActionResult> Register(EmployeeCreateUpdateModel userWriteModel)
     {
+       /* string Admin = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        Employee AdminEmployee = await _userManager.FindByNameAsync(Admin);
+        if (AdminEmployee.Role != Role.Admin)
+        {
+            var error = new Results();
+            error.AddErrorMessages("You are not authorized");
+            return Unauthorized(error);
+        }*/
+
+
         var registerUserCommand = userWriteModel.Adapt<RegisterUserCommand>();
         registerUserCommand = registerUserCommand with
         {
@@ -66,7 +78,7 @@ public class DepartManagmentController : BaseController
     }
     [HttpGet]
     [Authorize(AuthenticationSchemes = "Bearer")]
-    public async Task<IActionResult> GetUser([FromQuery] string Name)
+    public async Task<IActionResult> GetEmployeeByName([FromQuery] string Name)
     {
      
         string Admin = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
@@ -87,6 +99,67 @@ public class DepartManagmentController : BaseController
           errors => Problem(errors)
       );
     }
+
+
+    [HttpPut("{employeeId}")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public async Task<IActionResult> UpdateEmployee(string employeeId, EmployeeCreateUpdateModel employeeUpdateModel)
+    {
+        string adminUsername = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Employee adminEmployee = await _userManager.FindByNameAsync(adminUsername);
+
+        if (adminEmployee.Role != Role.Admin)
+        {
+            var error = new Results();
+            error.AddErrorMessages("You are not authorized");
+            return Unauthorized(error);
+        }
+
+        var updateEmployeeCommand = new UpdateEmployeeCommand
+        (
+         employeeId,
+       employeeUpdateModel
+        );
+
+        ErrorOr<Results> results = await _sender.Send(updateEmployeeCommand);
+
+        return results.Match(
+            success => Ok(success),
+            errors => Problem(errors)
+        );
+    }
+
+
+
+    [HttpDelete("{employeeId}")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public async Task<IActionResult> DeleteEmployee(string employeeId)
+    {
+        string adminUsername = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+        Employee adminEmployee = await _userManager.FindByNameAsync(adminUsername);
+
+        if (adminEmployee.Role != Role.Admin)
+        {
+            var error = new Results();
+            error.AddErrorMessages("You are not authorized");
+            return Unauthorized(error);
+        }
+
+        var deleteEmployeeCommand = new DeleteEmployeeCommand
+        (
+            employeeId
+       );
+
+        ErrorOr<Results> results = await _sender.Send(deleteEmployeeCommand);
+
+        return results.Match(
+            success => Ok(success),
+            errors => Problem(errors)
+        );
+    }
+
+
+
     [HttpGet]
     [Authorize]
     public IActionResult CheckIfAuthenticated()

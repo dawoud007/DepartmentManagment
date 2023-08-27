@@ -6,13 +6,17 @@ using DepartManagment.Application.Models.Employee;
 using DepartManagment.Application.Models.EmployeeTask;
 using DepartManagment.Application.Queries.Tasks.GetTask;
 using DepartManagment.Application.Queries.Tasks.GetTasks;
+using DepartManagment.Domain.Entities.ApplicationUser;
+using DepartManagment.Domain.Entities.ApplicationUser.Enums;
 using ErrorOr;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace DepartManagment.Presentation.Controllers
@@ -23,17 +27,28 @@ namespace DepartManagment.Presentation.Controllers
     {
         private readonly ISender _sender;
         private readonly ILogger<TaskController> _logger;
-
-        public TaskController(ISender sender, ILogger<TaskController> logger)
+        private readonly UserManager<Employee> _userManager;
+        public TaskController(ISender sender, ILogger<TaskController> logger, UserManager<Employee> userManager)
         {
             _sender = sender;
             _logger = logger;
+            _userManager = userManager;
         }
 
         [HttpPost]
     /*    [Authorize(AuthenticationSchemes = "Bearer")]*/
         public async Task<IActionResult> CreateTask(TaskCreateUpdateModel taskCreateUpdateModel)
         {
+            string Admin = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            Employee AdminEmployee = await _userManager.FindByNameAsync(Admin);
+            if (AdminEmployee.Role != Role.Admin || AdminEmployee.Role != Role.Manager)
+            {
+                var error = new Results();
+                error.AddErrorMessages("You are not authorized");
+                return Unauthorized(error);
+            }
+
+
             var command = new CreateTaskCommand(taskCreateUpdateModel.Title, taskCreateUpdateModel.Description, taskCreateUpdateModel.EmployeeId);
             var result = await _sender.Send(command);
 
@@ -47,6 +62,15 @@ namespace DepartManagment.Presentation.Controllers
     /*    [Authorize(AuthenticationSchemes = "Bearer")]*/
         public async Task<IActionResult> UpdateTask(Guid id, [FromBody] TaskCreateUpdateModel taskUpdateModel)
         {
+            string Admin = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            Employee AdminEmployee = await _userManager.FindByNameAsync(Admin);
+            if (AdminEmployee.Role != Role.Admin || AdminEmployee.Role != Role.Manager)
+            {
+                var error = new Results();
+                error.AddErrorMessages("You are not authorized");
+                return Unauthorized(error);
+            }
+
             var updateTaskCommand = new UpdateTaskCommand(
                 id,
                 taskUpdateModel.Title,
@@ -65,6 +89,15 @@ namespace DepartManagment.Presentation.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(Guid id)
         {
+            string Admin = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            Employee AdminEmployee = await _userManager.FindByNameAsync(Admin);
+            if (AdminEmployee.Role != Role.Admin || AdminEmployee.Role != Role.Manager)
+            {
+                var error = new Results();
+                error.AddErrorMessages("You are not authorized");
+                return Unauthorized(error);
+            }
+
             var deleteTaskCommand = new DeleteTaskCommand(id);
 
             ErrorOr<Unit> result = await _sender.Send(deleteTaskCommand);
@@ -79,6 +112,15 @@ namespace DepartManagment.Presentation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllTasks()
         {
+            string Admin = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            Employee AdminEmployee = await _userManager.FindByNameAsync(Admin);
+            if (AdminEmployee.Role != Role.Admin || AdminEmployee.Role != Role.Manager)
+            {
+                var error = new Results();
+                error.AddErrorMessages("You are not authorized");
+                return Unauthorized(error);
+            }
+
             var query = new GetAllTasksQuery();
             ErrorOr<List<TaskViewModel>> result = await _sender.Send(query);
 
@@ -91,6 +133,15 @@ namespace DepartManagment.Presentation.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTaskById(Guid id)
         {
+            string Admin = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            Employee AdminEmployee = await _userManager.FindByNameAsync(Admin);
+            if (AdminEmployee.Role != Role.Admin || AdminEmployee.Role != Role.Manager)
+            {
+                var error = new Results();
+                error.AddErrorMessages("You are not authorized");
+                return Unauthorized(error);
+            }
+
             var query = new GetTaskByIdQuery(id);
             ErrorOr<TaskViewModel> result = await _sender.Send(query);
 
