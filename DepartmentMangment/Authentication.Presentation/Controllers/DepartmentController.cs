@@ -29,7 +29,7 @@ namespace DepartManagment.Presentation.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]/[action]")]
-
+[Authorize(AuthenticationSchemes = "Bearer")]
 public class DepartmentController : BaseController
 {
     private readonly ISender _sender;
