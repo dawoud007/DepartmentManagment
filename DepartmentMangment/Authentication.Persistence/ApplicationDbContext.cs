@@ -29,13 +29,13 @@ namespace DepartManagment.Persistence
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
+          /*  if (!optionsBuilder.IsConfigured)
             {
-                var connectionString = "server=localhost;database=LeqaaDepartManagment;Uid=root;pwd=1216";
+                var connectionString = "Server=DESKTOP-06NBEEH\\\\SQLEXPRESS;Database=DepartmentManagment;Trusted_Connection=True;TrustServerCertificate=True;";
                 optionsBuilder.UseMySql(connectionString,
                                   ServerVersion.AutoDetect(connectionString))
                                   .UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
-            }
+            }*/
             base.OnConfiguring(optionsBuilder);
 
         }

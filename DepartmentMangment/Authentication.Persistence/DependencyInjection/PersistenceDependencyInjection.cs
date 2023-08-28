@@ -12,13 +12,20 @@ public static class PersistenceDependencyInjection
 {
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default");
-        services.AddDbContext<ApplicationDbContext>(options =>
+        /* var connectionString = configuration.GetConnectionString("Default");
+         services.AddDbContext<ApplicationDbContext>(options =>
+         {
+             options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+             .EnableSensitiveDataLogging()
+             .UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
+         });*/
+
+
+        services.AddDbContext<ApplicationDbContext>(Options =>
         {
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-            .EnableSensitiveDataLogging()
-            .UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
+            Options.UseSqlServer(configuration.GetConnectionString("Default"));
         });
+
 
         services.AddScoped<IDepartmentRepository, DepartmentRepository>(); 
         services.AddScoped<IEmployeeTaskRepository, EmployeeTaskRepository>();
